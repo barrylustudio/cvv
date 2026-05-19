@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>小小水族造景師：進階生態考驗</title>
+    <style>
+        body { font-family: 'PingFang TC', 'Microsoft JhengHei', sans-serif; background-color: #f4fbf7; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; margin: 0; padding: 20px; box-sizing: border-box; }
+        h1 { color: #2e7d32; margin: 0 0 10px 0; font-size: 28px; text-shadow: 1px 1px 2px rgba(0,0,0,0.1); }
+        .subtitle { color: #d32f2f; font-weight: bold; margin-bottom: 20px; font-size: 16px; letter-spacing: 1px; }
+        
+        #game-board { display: flex; flex-wrap: wrap; gap: 30px; background: #ffffff; padding: 25px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.08); max-width: 1000px; width: 100%; justify-content: center; }
+        
+        /* 左側：魚缸與 6 大參數 */
+        #left-panel { flex: 1; min-width: 350px; display: flex; flex-direction: column; gap: 15px; }
+        #aquarium { width: 100%; height: 280px; border: 8px solid #5d4037; border-radius: 15px 15px 30px 30px; background: linear-gradient(to bottom, #e1f5fe, #81d4fa); position: relative; overflow: hidden; box-shadow: inset 0 10px 20px rgba(255,255,255,0.4); }
+        .sand { position: absolute; bottom: 0; width: 100%; height: 35px; background: #d7ccc8; border-radius: 50% 50% 0 0 / 10px 10px 0 0; }
+        
+        /* 動態小丑魚 */
+        .fish { position: absolute; width: 65px; height: 45px; background: #ff9800; border-radius: 50% 45% 45% 50%; top: 120px; left: 50%; transform: translateX(-50%); transition: all 1s ease-in-out; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: bold; color: #fff; z-index: 10; box-shadow: 0 4px 8px rgba(0,0,0,0.2); }
+        .fish::before { content: ''; position: absolute; left: 20px; top: 0; width: 10px; height: 100%; background: white; border-left: 2px solid #333; border-right: 2px solid #333; }
+        
+        /* 結局動畫 */
+        .fish.happy { animation: jump 1s infinite; background: #ffb74d; box-shadow: 0 0 20px #ffeb3b; }
+        @keyframes jump { 0%, 100% { transform: translate(-50%, 0); } 50% { transform: translate(-50%, -40px) rotate(-10deg); } }
+        .fish.dead { transform: translateX(-50%) rotate(180deg) !important; background: #90a4ae; top: 30px; box-shadow: none; }
+        .fish.dead::before { background: #cfd8dc; }
+
+        /* 6 大參數面版 */
+        #stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .stat-box { background: #f9fbe7; padding: 10px; border-radius: 12px; font-size: 13px; font-weight: bold; color: #333; border: 1px solid #e6ee9c; }
+        .bar-bg { width: 100%; background: #e0e0e0; height: 12px; border-radius: 6px; margin-top: 5px; overflow: hidden; }
+        .bar-fill { height: 100%; transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1); }
+        
+        /* 右側：隨機工具與訊息 */
+        #right-panel { flex: 1; min-width: 350px; display: flex; flex-direction: column; gap: 10px; }
+        .info-box { background: #ffebee; padding: 12px; border-radius: 12px; border: 2px dashed #f44336; text-align: center; font-weight: bold; color: #c62828; font-size: 16px; margin-bottom: 5px; }
+        .msg-box { padding: 15px; background: #e3f2fd; border-left: 6px solid #2196f3; border-radius: 0 10px 10px 0; font-size: 14px; line-height: 1.5; color: #0d47a1; min-height: 85px; }
+        
+        #tools-container { display: flex; flex-direction: column; gap: 8px; }
+        .tool-btn { display: flex; align-items: center; gap: 12px; padding: 10px 15px; border: 2px solid #e0e0e0; border-radius: 15px; background: #fff; cursor: pointer; text-align: left; transition: all 0.2s; }
+        .tool-btn:hover:not(:disabled) { background: #f1f8e9; border-color: #81c784; transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.05); }
+        .tool-btn:disabled { opacity: 0.6; cursor: not-allowed; background: #f5f5f5; }
+        .tool-icon { font-size: 20px; background: #e8f5e9; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; border-radius: 50%; }
+        .tool-text b { font-size: 14px; color: #2e7d32; }
+        .tool-text small { display: block; font-size: 11px; color: #666; margin-top: 2px; }
+    </style>
+</head>
+<body>
+
+    <h1>拯救魚缸生態大作戰 <span style="font-size: 16px; color: #f44336;">(進階挑戰版)</span></h1>
+    <div class="subtitle">🎯 學習「水至清則無魚，人至察則無謀」的包容大智慧</div>
+
+    <div id="game-board">
+        <div id="left-panel">
+            <div id="aquarium">
+                <div class="sand"></div>
+                <div id="fish" class="fish">●_●</div>
+            </div>
+            <div id="stats-grid">
+                <div class="stat-box">🧼 魚缸清潔度：<span id="txt-c">15</span>%<div class="bar-bg"><div id="bar-c" class="bar-fill" style="background:#2196f3; width:15%;"></div></div></div>
+                <div class="stat-box">🦠 保護好菌量：<span id="txt-b">20</span>%<div class="bar-bg"><div id="bar-b" class="bar-fill" style="background:#4caf50; width:20%;"></div></div></div>
+                <div class="stat-box">💩 大便與髒污：<span id="txt-n">85</span>%<div class="bar-bg"><div id="bar-n" class="bar-fill" style="background:#8d6e63; width:85%;"></div></div></div>
+                <div class="stat-box">🧪 水質酸鹼度：<span id="txt-p">5.0</span><div class="bar-bg"><div id="bar-p" class="bar-fill" style="background:#ff9800; width:35%;"></div></div></div>
+                <div class="stat-box">🫧 新鮮氧氣量：<span id="txt-o">25</span>%<div class="bar-bg"><div id="bar-o" class="bar-fill" style="background:#00bcd4; width:25%;"></div></div></div>
+                <div class="stat-box">❤️ 小魚生命值：<span id="txt-h">80</span>%<div class="bar-bg"><div id="bar-h" class="bar-fill" style="background:#f44336; width:80%;"></div></div></div>
+            </div>
+        </div>
+
+        <div id="right-panel">
+            <div class="info-box">剩餘維護次數：<span id="clicks-display">3</span> 次</div>
+            <div id="msg-box" class="msg-box">
+                <b>【進階規則提示】</b><br>魚缸現在很髒，小魚生命值只有 80%！<br>⏳ 每過一回合，<b>大便會自然增加，氧氣也會變少喔！</b><br>請從隨機 7 種工具中挑 3 個，拯救小魚但也別把魚缸洗得太乾淨！
+            </div>
+            <div id="tools-container"></div>
+        </div>
+    </div>
+
+    <script>
+        // 初始難度提升：血量不滿、氧氣低、髒污高
+        let stats = { c: 15, b: 20, n: 85, p: 5.0, o: 25, h: 80 };
+        let clicks = 3;
+        let isGameOver = false;
+
+        // 工具加入策略性副作用 (例如換水會流失一點好菌)
+        const toolsDB = [
+            { id: 1, icon: '🌱', name: '種植綠色小水草', desc: '吸走大便髒污，吐出新鮮氧氣', eff: {c: 10, n: -25, o: 30, h: 10} },
+            { id: 2, icon: '🪶', name: '輕輕擦拭玻璃', desc: '只擦前方，留下一點青苔給好菌', eff: {c: 25, b: 5} },
+            { id: 3, icon: '🐌', name: '請金黃小蝸牛幫忙', desc: '慢慢吃掉角落青苔，不傷生態', eff: {c: 15, n: -10, b: 5, h: 5} },
+            { id: 4, icon: '🪣', name: '換掉一點點舊水', desc: '沖淡髒水，但水質震盪會讓好菌頭暈', eff: {n: -40, o: 20, p: 'reset', b: -5, h: 15} },
+            { id: 5, icon: '🧼', name: '洗洗舊濾網', desc: '製造大量氧氣，水流變很順暢', eff: {c: 20, o: 40, h: 10} },
+            { id: 6, icon: '🍂', name: '丟入大自然小樹葉', desc: '保護水質，好菌最喜歡的溫暖家', eff: {b: 25, n: -15, h: 15} },
+            { id: 7, icon: '🌀', name: '打開咕嚕泡泡機', desc: '送入滿滿的新鮮空氣', eff: {o: 50, c: 5, h: 5} },
+            { id: 8, icon: '🦐', name: '請小蝦吃點心', desc: '吃掉討厭的青苔，是最天然的清潔工', eff: {c: 20, n: -10, h: 5} },
+            { id: 9, icon: '💧', name: '滴入神奇礦物質', desc: '給小魚補充維他命，變得很強壯', eff: {b: 15, h: 25} },
+            { id: 10, icon: '🎋', name: '放入空心小竹筒', desc: '給小魚一個可以躲藏的安全祕密基地', eff: {h: 20, o: 5} }
+        ];
+
+        function initGame() {
+            const container = document.getElementById('tools-container');
+            const shuffled = [...toolsDB].sort(() => 0.5 - Math.random()).slice(0, 7);
+            
+            shuffled.forEach(t => {
+                const btn = document.createElement('button');
+                btn.className = 'tool-btn';
+                btn.innerHTML = `<div class="tool-icon">${t.icon}</div><div class="tool-text"><b>${t.name}</b><small>${t.desc}</small></div>`;
+                btn.onclick = () => useTool(t);
+                container.appendChild(btn);
+            });
+            updateUI();
+        }
+
+        function useTool(tool) {
+            if (isGameOver || clicks <= 0) return;
+            
+            clicks--;
+            document.getElementById('clicks-display').innerText = clicks;
+
+            // 【環境自然惡化機制】每回合髒污增加，氧氣減少
+            stats.n += 10;
+            stats.o -= 10;
+
+            // 如果環境太差，額外扣生命值
+            if (stats.o < 30 || stats.n > 80) {
+                stats.h -= 10;
+            }
+
+            // 套用工具效果
+            if(tool.eff.c) stats.c += tool.eff.c;
+            if(tool.eff.b) stats.b += tool.eff.b;
+            if(tool.eff.n) stats.n += tool.eff.n;
+            if(tool.eff.o) stats.o += tool.eff.o;
+            if(tool.eff.h) stats.h += tool.eff.h;
+            
+            if(tool.eff.p === 'reset') {
+                stats.p = 7.0; 
+            }
+
+            // 限制數值範圍 (0~100)
+            stats.c = Math.max(0, Math.min(100, stats.c));
+            stats.b = Math.max(0, Math.min(100, stats.b));
+            stats.n = Math.max(0, Math.min(100, stats.n));
+            stats.o = Math.max(0, Math.min(100, stats.o));
+            stats.h = Math.max(0, Math.min(100, stats.h));
+            stats.p = Math.max(0, Math.min(14, stats.p));
+
+            let msg = `⏳ 時間流逝，髒污自然增加了...<br>你選擇了「${tool.name}」來救援！`;
+            document.getElementById('msg-box').innerHTML = msg;
+
+            updateUI();
+
+            if (clicks === 0) {
+                setTimeout(checkEndGame, 600);
+            }
+        }
+
+        function updateUI() {
+            document.getElementById('txt-c').innerText = stats.c;
+            document.getElementById('bar-c').style.width = stats.c + "%";
+            
+            document.getElementById('txt-b').innerText = stats.b;
+            document.getElementById('bar-b').style.width = stats.b + "%";
+            
+            document.getElementById('txt-n').innerText = stats.n;
+            document.getElementById('bar-n').style.width = stats.n + "%";
+            
+            document.getElementById('txt-o').innerText = stats.o;
+            document.getElementById('bar-o').style.width = stats.o + "%";
+            
+            document.getElementById('txt-h').innerText = stats.h;
+            document.getElementById('bar-h').style.width = stats.h + "%";
+            
+            document.getElementById('txt-p').innerText = stats.p.toFixed(1);
+            let pPercent = (stats.p / 14) * 100;
+            document.getElementById('bar-p').style.width = pPercent + "%";
+        }
+
+        function checkEndGame() {
+            isGameOver = true;
+            const fish = document.getElementById('fish');
+            const msgBox = document.getElementById('msg-box');
+            
+            const btns = document.querySelectorAll('.tool-btn');
+            btns.forEach(b => b.disabled = true);
+
+            // 失敗判定 1：太愛乾淨
+            if (stats.c >= 88) {
+                fish.className = 'fish dead';
+                fish.innerText = "x_x";
+                msgBox.innerHTML = `
+                    <span style="color:#d32f2f; font-size:16px;"><b>🚨 挑戰失敗：魚缸洗得太極端乾淨了！</b></span><br><br>
+                    古人說：<b>「水至清則無魚，人至察則無謀。」</b><br>
+                    過度追求 100% 的完美，把所有青苔都抹除，魚兒反而沒有了安全感。<br>
+                    交朋友也是一樣喔！懂得包容別人的小缺點，友誼才會長久。<br><br>
+                    <i>(請按 F5 或重新整理網頁再試一次！)</i>
+                `;
+                msgBox.style.borderLeftColor = "#d32f2f";
+                msgBox.style.backgroundColor = "#ffebee";
+            } 
+            // 失敗判定 2：未注意環境惡化導致沒血
+            else if (stats.h <= 40 || stats.o < 20 || stats.n > 85) {
+                fish.className = 'fish dead';
+                fish.innerText = "x_x";
+                msgBox.innerHTML = `
+                    <span style="color:#d32f2f; font-size:16px;"><b>💔 挑戰失敗：小魚撐不住了...</b></span><br><br>
+                    雖然你沒有過度打掃，但忘記處理不斷增加的髒污或補足氧氣了！<br>
+                    下次記得多挑選「種水草」、「泡泡機」或「換水」來維持環境的健康喔。<br><br>
+                    <i>(請按 F5 或重新整理網頁再試一次！)</i>
+                `;
+                msgBox.style.borderLeftColor = "#d32f2f";
+                msgBox.style.backgroundColor = "#ffebee";
+            } 
+            // 完美過關：清潔度剛好，且血量健康
+            else {
+                fish.className = 'fish happy';
+                fish.innerText = "^_^";
+                msgBox.innerHTML = `
+                    <span style="color:#2e7d32; font-size:16px;"><b>🏆 挑戰成功！你是真正的處世大師！</b></span><br><br>
+                    太棒了！你克服了惡劣的環境，不僅救了小魚，還沒有盲目追求絕對的乾淨。<br>
+                    這就是<b>「水至清則無魚」</b>的包容大智慧！懂得留餘地，小魚現在超級開心！<br><br>
+                    <i>(按 F5 可以挑戰不同的隨機工具組合喔！)</i>
+                `;
+                msgBox.style.borderLeftColor = "#4caf50";
+                msgBox.style.backgroundColor = "#e8f5e9";
+            }
+        }
+
+        initGame();
+    </script>
+</body>
+</html>
